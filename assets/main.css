@@ -1,0 +1,252 @@
+@font-face {
+  font-family: 'Roboto';
+  src: url('Roboto-Medium.ttf') ;
+}
+
+@font-face {
+  font-family: 'sffortune';
+  src: url('SF-Fortune-Wheel-Condensed.ttf') ;
+}
+
+
+body {
+  font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+  color: #fff;
+  height: 100%;
+  text-align: center;
+  font-size: 18px;
+  margin: 0;
+  overflow-x:hidden; 
+}
+
+@font-face {
+  font-family: 'Roboto';
+  src: url('Roboto-Medium.ttf') ;
+}
+
+.wrappper {
+  width: 100%;
+  margin: 0 auto;
+}
+.wrappper:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+canvas {
+  color: #fff;
+  padding-top: 20px;
+}
+
+h1, h2, h3 {
+  font-family: 'Roboto', sans-serif;
+  font-weight: 100;
+  text-transform: uppercase;
+  margin: 5px 0;
+}
+
+h1 {
+  font-size: 2.6em;
+}
+
+h2 {
+  font-size: 1.6em;
+}
+
+p {
+  font-size: 1.6em;
+}
+
+#alphabet {
+  margin: 15px auto;
+  padding: 0;
+  max-width: 900px;
+}
+#alphabet:after {
+  content: "";
+  display: table;
+  clear: both;
+}
+
+#alphabet li {
+  display: inline-block;
+  margin: 0 10px 10px 0;
+  list-style: none;
+  width: 40px;
+  height: 30px;
+  padding-top: 10px;
+  background: #9EC1FF;
+  color: #000000;
+  font-weight: bold;
+  cursor: pointer;
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  -khtml-border-radius: 5px;
+  border: solid 1px #fff;
+}
+#alphabet li:hover {
+  background: transparent;
+  border: solid 1px #fff;
+  color: #fff;
+}
+
+#my-word {
+  margin: 0;
+  display: block;
+  padding: 0;
+  display: block;
+}
+
+#my-word li {
+  position: relative;
+  list-style: none;
+  margin: 0;
+  display: inline-block;
+  padding: 0 10px;
+  font-size: 2.5em;
+}
+
+.active {
+  opacity: 0.1;
+  filter: alpha(opacity=40);
+  -moz-transition: all 1s ease-in;
+  -moz-transition: all 0.3s ease-in-out;
+  -webkit-transition: all 0.3s ease-in-out;
+  cursor: default;
+}
+.active:hover {
+  -moz-transition: all 1s ease-in;
+  -moz-transition: all 0.3s ease-in-out;
+  -webkit-transition: all 0.3s ease-in-out;
+  opacity: 0.4;
+  filter: alpha(opacity=40);
+  -moz-transition: all 1s ease-in;
+  -moz-transition: all 0.3s ease-in-out;
+  -webkit-transition: all 0.3s ease-in-out;
+}
+
+#ques
+{
+  display: none;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  background-color: #0e0E0e;
+}
+
+#mylives {
+  font-size: 1.6em;
+  text-align: center;
+  display: block;
+}
+
+button {
+  -moz-border-radius: 5px;
+  -webkit-border-radius: 5px;
+  border-radius: 5px;
+  -khtml-border-radius: 5px;
+  background: #4796CA;
+  color: #fff;
+  border: solid 1px #fff;
+  text-decoration: none;
+  cursor: pointer;
+  font-size: 1.2em;
+  padding: 18px 10px;
+  width: 180px;
+  margin: 10px;
+  outline: none;
+
+}
+button:hover {
+  -webkit-transition: all 0.3s ease-in-out;
+  -moz-transition: all 0.3s ease-in-out;
+  transition: all 0.3s ease-in-out;
+  background: #3D7CA5;
+  border: solid 1px #fff;
+  color: #fff;
+}
+
+#buttons
+{
+  max-width: 700px;
+    left: 0;
+    right: 0;
+    margin: auto;
+    margin-top: 40px;
+
+    /*vsv  #9EC1FF #AFCCFF*/
+}
+
+#catlb
+{
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 100;
+  top: 0;
+  left: 0;
+  display: none;
+}
+
+@media (max-width: 767px) {
+  #alphabet {
+    padding: 0 0 0 15px;
+  }
+}
+@media (max-width: 480px) {
+  #alphabet {
+    padding: 0 0 0 25px;
+  }
+}
+
+#wof{
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  background-color: #041322;
+}
+#discat{
+    border-radius: 5px;
+    background: #eee;
+    border: solid 1px white;
+    height: 40%;
+    position: absolute;
+    width: 60%;
+    top: 30%;
+    left: 20%;
+    display: inherit;
+}
+
+#reset{
+  position: absolute;
+    width: 250px;
+    left: 0;
+    right: 0;
+    margin: auto;
+    font-family: "roboto";
+    bottom: 20px;
+    display: inherit;
+}
+
+#correct
+{
+  position: fixed;
+  height: 100%;
+  width: 100%;
+  background: rgba(0,0,0,0.8);
+  z-index: 100;
+  top: 0;
+  left: 0;
+  display: none;
+}
+
+.matrixlogo{
+    position: fixed;
+    top: 5px;
+    left: -15px;
+    width: 200px;
+    z-index: 1000;
+}
