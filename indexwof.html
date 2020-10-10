@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv=X-UA-Compatible content="IE=EmulateIE7"/>
+<title>MATRIX | BOSM GAME</title>
+<!-- 
+<script type="text/javascript">
+//<![CDATA[
+// try{if (!window.CloudFlare) {var CloudFlare=[{verbose:0,p:0,byc:0,owlid:"cf",bag2:1,mirage2:0,oracle:0,paths:{cloudflare:"/cdn-cgi/nexp/dok3v=1613a3a185/"},atok:"bb264f9a96eb644e80288c522f4aba13",petok:"ad31f9da7a6fb6916fc8eea0b2b73ad068d774d0-1441060385-1800",betok:"5dab87cc44b9288b4d609f3e806f082dceb9f468-1441060385-120",zone:"bramp.net",rocket:"0",apps:{"ga_key":{"ua":"UA-136478-5","ga_bs":"2"}}}];!function(a,b){a=document.createElement("script"),b=document.getElementsByTagName("script")[0],a.async=!0,a.src="assets/cloudflare.min.js",b.parentNode.insertBefore(a,b)}()}}catch(e){};
+// //]]>
+</script>
+<link href=assets/reset.css type=text/css rel=stylesheet>  -->
+<script type=text/javascript src=assets/jquery.min.js></script>
+<script type=text/javascript src=assets/jquery.tinysort.min.js></script>
+<!--[if IE]><script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jit/2.0.2/Extras/excanvas.min.js"></script><![endif]-->
+<script type=text/javascript>// Helpers
+	shuffle = function(o) {
+		for ( var j, x, i = o.length; i; j = parseInt(Math.random() * i), x = o[--i], o[i] = o[j], o[j] = x)
+			;
+		return o;
+	};
+
+	String.prototype.hashCode = function(){
+		// See http://www.cse.yorku.ca/~oz/hash.html		
+		var hash = 5381;
+		for (i = 0; i < this.length; i++) {
+			char = this.charCodeAt(i);
+			hash = ((hash<<5)+hash) + char;
+			hash = hash & hash; // Convert to 32bit integer
+		}
+		return hash;
+	}
+
+	var selcat = "";
+
+	Number.prototype.mod = function(n) {
+		return ((this%n)+n)%n;
+	}</script><script type=text/javascript>venues = {
+		"116208"  : "Anime",
+		"66271"   : "Bollywood Celebs",
+		"5518"    : "Books",
+		"392360"  : "Cartoons",
+		"2210952" : "Bollywood Movies",
+		"207306"  : "Games",
+		"41457"   : "Historical Events",
+		"101161"  : "Hollywood Movies",
+		"257424"  : "Landmarks",
+		"512060"  : "TV Shows",
+		"66244"   : "Sports Lingo",
+		"352867"  : "Hollywood Celebs",
+		// "268052"  : "Subway",
+		// "5665"    : "Summers Restaurant & Sports Bar",
+		// "129724"  : "Cosi",
+		// "42599"   : "Ray's Hell Burger"
+	};
+
+	$(function() {
+
+		var venueContainer = $('#venues ul');
+		$.each(venues, function(key, item) {
+			venueContainer.append(
+		        $(document.createElement("li"))
+		        .append(
+	                $(document.createElement("input")).attr({
+                         id:    'venue-' + key
+                        ,name:  item
+                        ,value: item
+                        ,type:  'checkbox'
+                        ,checked:true
+	                })
+	                .change( function() {
+	                	var cbox = $(this)[0];
+	                	var segments = wheel.segments;
+	                	var i = segments.indexOf(cbox.value);
+
+	                	if (cbox.checked && i == -1) {
+	                		segments.push(cbox.value);
+
+	                	} else if ( !cbox.checked && i != -1 ) {
+	                		segments.splice(i, 1);
+	                	}
+
+	                	segments.sort();
+	                	wheel.update();
+	                } )
+
+		        ).append(
+	                $(document.createElement('label')).attr({
+	                    'for':  'venue-' + key
+	                })
+	                .text( item )
+		        )
+		    )
+		});
+
+		$('#venues ul>li').tsort("input", {attr: "value"});
+	});</script><script type=text/javascript>// WHEEL!
+	var wheel = {
+
+		timerHandle : 0,
+		timerDelay : 33,
+
+		angleCurrent : 0,
+		angleDelta : 0,
+
+		size : 290,
+
+		canvasContext : null,
+
+		colors : [ '#ffff00', '#ffc700', '#ff9100', '#ff6301', '#ff0000', '#c6037e',
+		           '#713697', '#444ea1', '#2772b2', '#0297ba', '#008e5b', '#8ac819' ],
+
+		//segments : [ 'Andrew', 'Bob', 'Fred', 'John', 'China', 'Steve', 'Jim', 'Sally', 'Andrew', 'Bob', 'Fred', 'John', 'China', 'Steve', 'Jim'],
+		segments : [],
+
+		seg_colors : [], // Cache of segments to colors
+		
+		maxSpeed : Math.PI / 20,
+
+		upTime : 1000, // How long to spin up for (in ms)
+		downTime : 9000, // How long to slow down for (in ms)
+
+		spinStart : 0,
+
+		frames : 0,
+
+		centerX : 300,
+		centerY : 300,
+
+		spin : function() {
+
+			// Start the wheel only if it's not already spinning
+			if (wheel.timerHandle == 0) {
+				wheel.spinStart = new Date().getTime();
+				wheel.maxSpeed = Math.PI / (16 + Math.random()*4); // Randomly vary how hard the spin is
+				wheel.frames = 0;
+				wheel.sound.play();
+
+				wheel.timerHandle = setInterval(wheel.onTimerTick, wheel.timerDelay);
+			}
+		},
+
+		onTimerTick : function() {
+
+			wheel.frames++;
+
+			wheel.draw();
+
+			var duration = (new Date().getTime() - wheel.spinStart);
+			var progress = 0;
+			var finished = false;
+
+			if (duration < wheel.upTime) {
+				progress = duration / wheel.upTime;
+				wheel.angleDelta = wheel.maxSpeed
+						* Math.sin(progress * Math.PI / 2);
+			} else {
+				progress = duration / wheel.downTime;
+				wheel.angleDelta = wheel.maxSpeed
+						* Math.sin(progress * Math.PI / 2 + Math.PI / 2);
+				if (progress >= 1)
+					finished = true;
+			}
+
+			wheel.angleCurrent += wheel.angleDelta;
+			while (wheel.angleCurrent >= Math.PI * 2)
+				// Keep the angle in a reasonable range
+				wheel.angleCurrent -= Math.PI * 2;
+
+			if (finished) {
+				clearInterval(wheel.timerHandle);
+				wheel.timerHandle = 0;
+				wheel.angleDelta = 0;
+				catlb();
+				$("#counter").html((wheel.frames / duration * 1000) + " FPS");
+			}
+
+			/*
+			// Display RPM
+			var rpm = (wheel.angleDelta * (1000 / wheel.timerDelay) * 60) / (Math.PI * 2);
+			$("#counter").html( Math.round(rpm) + " RPM" );
+			 */
+		},
+
+		init : function(optionList) {
+			try {
+				wheel.initWheel();
+				wheel.initAudio();
+				wheel.initCanvas();
+				wheel.draw();
+
+				$.extend(wheel, optionList);
+
+			} catch (exceptionData) {
+				alert('Wheel is not loaded ' + exceptionData);
+			}
+
+		},
+
+		initAudio : function() {
+			var sound = document.createElement('audio');
+			sound.setAttribute('src', 'assets/wheel.mp3');
+			wheel.sound = sound;
+		},
+
+		initCanvas : function() {
+			var canvas = $('#wheel #canvas').get(0);
+
+			if ($.browser.msie) {
+				canvas = document.createElement('canvas');
+				$(canvas).attr('width', 1000).attr('height', 600).attr('id', 'canvas').appendTo('.wheel');
+				canvas = G_vmlCanvasManager.initElement(canvas);
+			}
+
+			canvas.addEventListener("click", wheel.spin, false);
+			wheel.canvasContext = canvas.getContext("2d");
+			var scaled = canvas.getContext("2d");
+			scaled.scale(0.8,0.8);
+		},
+
+		initWheel : function() {
+			shuffle(wheel.colors);
+		},
+
+		// Called when segments have changed
+		update : function() {
+			// Ensure we start mid way on a item
+			//var r = Math.floor(Math.random() * wheel.segments.length);
+			var r = 0;
+			wheel.angleCurrent = ((r + 0.5) / wheel.segments.length) * Math.PI * 2;
+
+			var segments = wheel.segments;
+			var len      = segments.length;
+			var colors   = wheel.colors;
+			var colorLen = colors.length;
+
+			// Generate a color cache (so we have consistant coloring)
+			var seg_color = new Array();
+			for (var i = 0; i < len; i++)
+				seg_color.push( colors [ segments[i].hashCode().mod(colorLen) ] );
+
+			wheel.seg_color = seg_color;
+
+			wheel.draw();
+		},
+
+		draw : function() {
+			wheel.clear();
+			wheel.drawWheel();
+			wheel.drawNeedle();
+		},
+
+		clear : function() {
+			var ctx = wheel.canvasContext;
+			ctx.clearRect(0, 0, 1000, 800);
+		},
+
+		drawNeedle : function() {
+			var ctx = wheel.canvasContext;
+			var centerX = wheel.centerX;
+			var centerY = wheel.centerY;
+			var size = wheel.size;
+
+			ctx.lineWidth = 1;
+			ctx.strokeStyle = '#000000';
+			ctx.fileStyle = '#ffffff';
+
+			ctx.beginPath();
+
+			ctx.moveTo(centerX + size - 40, centerY);
+			ctx.lineTo(centerX + size + 20, centerY - 10);
+			ctx.lineTo(centerX + size + 20, centerY + 10);
+			ctx.closePath();
+
+			ctx.stroke();
+			ctx.fill();
+
+			// Which segment is being pointed to?
+			var i = wheel.segments.length - Math.floor((wheel.angleCurrent / (Math.PI * 2))	* wheel.segments.length) - 1;
+
+			// Now draw the winning name
+			ctx.textAlign = "left";
+			ctx.textBaseline = "middle";
+			ctx.fillStyle = '#eee';
+			ctx.font = "bold 2em Arial";
+			ctx.fillText(wheel.segments[i], centerX + size + 25, centerY);
+			selcat = wheel.segments[i];
+		},
+
+		drawSegment : function(key, lastAngle, angle) {
+			var ctx = wheel.canvasContext;
+			var centerX = wheel.centerX;
+			var centerY = wheel.centerY;
+			var size = wheel.size;
+
+			var segments = wheel.segments;
+			var len = wheel.segments.length;
+			var colors = wheel.seg_color;
+
+			var value = segments[key];
+			
+			ctx.save();
+			ctx.beginPath();
+
+			// Start in the centre
+			ctx.moveTo(centerX, centerY);
+			ctx.arc(centerX, centerY, size, lastAngle, angle, false); // Draw a arc around the edge
+			ctx.lineTo(centerX, centerY); // Now draw a line back to the centre
+
+			// Clip anything that follows to this area
+			//ctx.clip(); // It would be best to clip, but we can double performance without it
+			ctx.closePath();
+
+			ctx.fillStyle = colors[key];
+			ctx.fill();
+			ctx.stroke();
+
+			// Now draw the text
+			ctx.save(); // The save ensures this works on Android devices
+			ctx.translate(centerX, centerY);
+			ctx.rotate((lastAngle + angle) / 2);
+
+			ctx.fillStyle = '#000000';
+			ctx.fillText(value.substr(0, 20), size / 2 + 20, 0);
+			ctx.restore();
+
+			ctx.restore();
+		},
+
+		drawWheel : function() {
+			var ctx = wheel.canvasContext;
+
+			var angleCurrent = wheel.angleCurrent;
+			var lastAngle    = angleCurrent;
+
+			var segments  = wheel.segments;
+			var len       = wheel.segments.length;
+			var colors    = wheel.colors;
+			var colorsLen = wheel.colors.length;
+
+			var centerX = wheel.centerX;
+			var centerY = wheel.centerY;
+			var size    = wheel.size;
+
+			var PI2 = Math.PI * 2;
+
+			ctx.lineWidth    = 1;
+			ctx.strokeStyle  = '#DDD';
+			ctx.textBaseline = "middle";
+			ctx.textAlign    = "center";
+			ctx.font         = "1.4em Arial";
+
+			for (var i = 1; i <= len; i++) {
+				var angle = PI2 * (i / len) + angleCurrent;
+				wheel.drawSegment(i - 1, lastAngle, angle);
+				lastAngle = angle;
+			}
+			// Draw a center circle
+			ctx.beginPath();
+			ctx.arc(centerX, centerY, 20, 0, PI2, false);
+			ctx.closePath();
+
+			ctx.fillStyle   = '#000';
+			ctx.strokeStyle = '#333';
+			ctx.fill();
+			ctx.stroke();
+
+			// Draw outer circle
+			ctx.beginPath();
+			ctx.arc(centerX, centerY, size, 0, PI2, false);
+			ctx.closePath();
+
+			ctx.lineWidth   = 10;
+			ctx.strokeStyle = '#CCC';
+			ctx.stroke();
+		},
+	}
+
+	window.onload = function() {
+		wheel.init();
+
+		var segments = new Array();
+		$.each($('#venues input:checked'), function(key, cbox) {
+			segments.push( cbox.value );
+		});
+
+		wheel.segments = segments;
+		wheel.update();
+
+		// Hide the address bar (for mobile devices)!
+		setTimeout(function() {
+			window.scrollTo(0, 1);
+		}, 0);
+	}
+
+	</script>
+	<link rel="stylesheet" type="text/css" href="assets/main.css">
+    <!-- // <script type="text/javascript"  src="main.js"></script> -->
+	</head>
+	
+	<body>
+	<img src="assets/matrix.png" class="matrixlogo">
+	<div style="z-index: 1000;position: fixed;right: 20px;font-family:roboto;bottom:10px;"><span style="font-size:15px;border-bottom:1px solid white;">Powered By</span><br>
+	<span style="font-size:30px"><b>DVM</b></span></div>
+	<div id="wof">
+		<div id="venues" style="float:left;display:none;"><ul/></div>
+		
+		<span style="font-size:70px;color:#F7F7F7;font-family: sffortune;line-height:100px;">WHEEL OF FORTUNE</span>
+		<div id="wheel">
+		<canvas id="canvas" width=800 height=480></canvas>
+		</div>
+		<div id="catlb">
+			<div id="discat">
+			<h2 style="color:#4796CA;padding:20px;"><b>Selected Category is :</b></h2>
+			<h1 id="discatn" style="color:#002887;padding:20px;margin-top: -22px;font-size: 2.5em;" ></h1>
+			<button id="reset">Proceed to Question</button>
+			</div>
+		</div>
+	</div>
+	<!-- <div id="stats">
+	<div id="counter"></div>
+	</div> -->
+	<div id="ques" >
+		<h1 style="margin-top: 10px;font-size: 4em;font-family: sffortune;margin-bottom: -10px;" id="txtques"></h1>
+		<div class="wrapper">
+	        <p id="catagoryName" style="font-size: 1.7em;color:#DFDFDF;"></p>       
+	        <div id="hold">
+	        </div>
+	        <div id="buttons">
+	        </div> 
+	        <p id="clue"></p>  
+	        <div class="container" style="position: absolute;left: 0;right: 0;bottom: 50px;">
+	          <button id="hint">Hint</button>
+	        
+	        </div>
+
+	        <div id="correct">
+				<div id="discat">
+				<h2 style="color:#349136;padding:20px;font-size: 50px;margin-top: 30px;">CORRECT ANSWER</h2>
+				<button id="next" style="position: absolute;left: 0;right: 0;margin: auto;bottom: 35px;">Next Question</button>			
+				</div>
+			</div>
+	    </div>
+	<span style="position: absolute;left: 15px;bottom: 10px;font-family: sffortune;font-size: 25px">WHEEL OF<br>FORTUNE</span>    
+	</div>
+	<script type="text/javascript">
+		var chosenCategory;     // Selected catagory	 
+		var catagoryIndex ;
+		var hintIndex ;
+		var categories;  
+		var gamecount = 0;
+		categories = [
+			    	['NEON GENESIS EVANGELION','FULL METAL ALCHEMIST BROTHERHOOD','COWBOY BEBOP','CODE GEASS','DETECTIVE CONAN','INAZUMA ELEVEN','DRAGON BALL','FAIRY TAIL','NARUTO SHIPPUDEN','SERIAL EXPERIMENTS LAIN','SAMURAI CHAMPLOO','PSYCHO PASS'],
+			    	['BOMAN IRANI','NASEERUDDIN SHAH','PARESH RAWAL','NAWAZUDDIN SIDDIQUI','SHABANA AZMI','SONALI BENDRE','PREITY ZINTA','MADHURI DIXIT','VIDYA BALAN','SHARMILA TAGORE','WAHEEDA REHMAN'],
+			    	['THE MONK WHO SOLD HIS FERRARI','GREAT EXPECTATIONS','ANNA KARENINA','DAVID COPPERFIELD','A THOUSAND SPLENDID SUNS','THE DIARY OF A WIMPY KID','HITCHHIKERS GUIDE TO GALAXY','GULLIVERS TRAVELS','ALICE IN WONDERLAND','ONE NIGHT AT THE CALL CENTER','MEIN KAMPF','THE FAULT IN OUR STARS','ANIMAL FARM','LORD OF THE FLIES','THE SATANIC VERSES','SCION OF IKSHVAKU','THE MERCHANT OF VENICE','VERONIKA DECIDES TO DIE'],
+			    	['COURAGE THE COWARDLY DOG','THE FLINTSTONES','THE PINK PANTHER SHOW','PHINEAS AND FERB','THE LOONEY TUNES SHOW','SAMURAI JACK','KIDS NEXT DOOR','THE ROAD RUNNER SHOW','KICK BUTTOWSKI SUBURBAN DAREDEVIL','DEXTERS LABORATORY','JOHNNY BRAVO','OGGY AND THE COCKROACHES','JACKIE CHAN ADVENTURES','THE SYLVESTER AND TWEETY MYSTERIES','TEENAGE MUTANT NINJA TURTLES','FOSTERS HOME FOR IMAGINARY FRIENDS'],
+			    	['ZINDAGI NA MILEGI DOBARA','DIL CHAHTA HAI','ONCE UPON A TIME IN MUMBAI','RANG DE BASANTI','YEH JAWAANI HAI DEEWANI','GANGS OF WASSEYPUR','NO ONE KILLED JESSICA','JO JEETA WOHI SIKANDAR','WAKE UP SID','DETECTIVE BYOMKESH BAKSHY','YAADON KI BAARAAT','KAAGAZ KE PHOOL'],
+			    	['DEFENCE OF THE ANCIENTS','DARKSIDERS','METAL GEAR SOLID','FALLOUT NEW VEGAS','PORTAL','WOLFENSTEIN A NEW ORDER','CRYSIS','NEED FOR SPEED MOST WANTED','WORLD OF WARCRAFT','FORZA HORIZON','LEGEND OF ZELDA','SPLINTER CELL BLACKLIST','RESIDENT EVIL','GRAN TURISMO','UNREAL TOURNAMENT'],
+			    	['BOSTON TEA PARTY','CHERNOBYL NUCLEAR DISASTER','HOLOCAUST','RENAISSANCE','PEARL HARBOUR ATTACK','BATTLE OF WATERLOO','DANDI MARCH','AMERICAN CIVIL WAR','FRENCH REVOLUTION','FALL OF BERLIN WALL','BIRTH OF CHRIST','TREATY OF VERSAILLES','THE GREAT DEPRESSION'],
+			    	['HONEY I SHRUNK THE KIDS','THE BIG LEBOWSKI','THE EMPIRE STRIKES BACK','THE WIZARD OF OZ','LAWRENCE OF ARABIA','SILENCE OF THE LAMBS','SHAWSHANK REDEMPTION','APOCALYPSE NOW','VOYAGE OF THE DAWN TREADER','A WALK TO REMEMBER','CHARLIE AND THE CHOCOLATE FACTORY','ZERO DARK THIRTY','THE CURIOUS CASE OF BENJAMIN BUTTON','RATATOUILLE','SHUTTER ISLAND','THE MINORITY REPORT'],
+			    	['CHICHEN ITZA','THE GREAT SPHINX','CHRIST THE REDEEMER','EASTER ISLAND','ELEPHANTA CAVES','AUSCHWITZ','LEANING TOWER OF PISA','HOOVER DAM','GOLDEN GATE BRIDGE','QUTUB MINAR','EIFFEL TOWER','ANGKOR WAT','HAGIA SOPHIA','LOUVRE MUSEUM','ROCK OF GIBRALTAR','GREAT BARRIER REEF'],
+			    	['BETTER CALL SAUL','IT IS ALWAYS SUNNY IN PHILADELPHIA','WHOSE LINE IS IT ANYWAY','TWIN PEAKS','ORANGE IS THE NEW BLACK','THE VAMPIRE DIARIES','THE SOPRANOS','ARRESTED DEVELOPMENT','THE DAILY SHOW','TRUE DETECTIVE','PRISON BREAK','RULES OF ENGAGEMENT','TWO AND A HALF MEN','ANGER MANAGEMENT','EVERYBODY LOVES RAYMOND'],
+			    	['FINESSE SHOT','RAINBOW FLICK','STALEMATE','RETIRED HURT','DOUBLE FAULT','RABBIT PUNCH','STEEPLECHASE','PINCH HITTER'],
+			    	['MORGAN FREEMAN','MARILYN MONROE','NATALIE PORTMAN','MERYL STREEP','SCARLETT JOHANSSON','INGRID BERGMAN','AUDREY HEPBURN','ELIZABETH TAYLOR','GEORGE CLOONEY','JACK NICHOLSON','CHRISTIAN BALE','MARLON BRANDO','ANTHONY HOPKINS','ORLANDO BLOOM','BEN AFFLECK','HUGH JACKMAN']
+			    ];
+		function wofhide()
+		{
+		  $('#wof').fadeOut(200);
+		  $('#catlb').fadeOut(200);
+		  $('#ques').fadeIn(200);
+
+		}
+
+		function catlb()
+		{
+			$('#catlb').delay(200).fadeIn(200);
+			$('#discatn').text(selcat);
+			catname = ['Anime','Bollywood Celebs','Books','Cartoons','Bollywood Movies','Games','Historical Events','Hollywood Movies','Landmarks','TV Shows','Sports Lingo','Hollywood Celebs'];
+			for(i=0;i<catname.length;++i)
+			{
+				if(catname[i]===selcat)
+				{
+					catagoryIndex = i;
+					break;
+				}
+			}
+		}
+		
+		$(document).ready(function(){
+
+			var alphabet = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H',
+					        'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S',
+					        'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+			
+			       // Array of topics
+  			       
+			var word ;              // Selected word
+			// create alphabet ul
+			var buttons = function () {
+			    myButtons = document.getElementById('buttons');
+			    letters = document.createElement('ul');
+			    
+			    for (var i = 0; i < alphabet.length; i++) {
+			      letters.id="alphabet";
+			      list = document.createElement('li');
+			      list.id = 'letter';
+			      list.innerHTML = alphabet[i];
+			      check();
+			      myButtons.appendChild(letters);
+			      letters.appendChild(list);
+			    }
+			}	
+			// Win
+			   comments = function () {
+			      if (counter + space === geusses.length) {
+			        hintIndex = chosenCategory.indexOf(word);
+			        categories[catagoryIndex][hintIndex]= null;
+			        function cong(){
+			        	$('#correct').fadeIn(200);
+			        	youwin();
+			        }
+			        cong();
+
+			      }
+			      else
+			      {
+			      	correctsound();
+			      }
+			  }
+
+			// OnClick Function
+			   check = function () {
+			    list.onclick = function () {
+			      var geuss = (this.innerHTML);
+			      this.setAttribute("class", "active");
+			      this.onclick = null;
+				    for (var i = 0; i < word.length; i++) {
+					    if (word[i] === geuss) {
+					          geusses[i].innerHTML = geuss;
+					          counter += 1;
+					          
+					          comments();
+					    }    
+				    }
+				    var j = (word.indexOf(geuss));
+				    if (j === -1)
+				    {
+				    	wrongsound();
+				    }
+
+			    }  
+			  }
+
+			  var soundp = document.createElement('audio');
+
+			  function correctsound(){
+				soundp.setAttribute('src', 'assets/correct.mp3');
+				soundp.play();
+			  }
+
+			  function wrongsound(){
+				soundp.setAttribute('src', 'assets/wrong.mp3');
+				soundp.play();
+			  }
+
+			  function youwin(){
+				soundp.setAttribute('src', 'assets/youwin.mp3');
+				soundp.play();
+			  }
+
+			  function buttonclick(){
+				soundp.setAttribute('src', 'assets/buttonclick.mp3');
+				soundp.play();
+			  }
+
+			// Create geusses ul
+			   result = function () {
+			    wordHolder = document.getElementById('hold');
+			    correct = document.createElement('ul');
+			    
+
+			    for (var i = 0; i < word.length; i++) {
+			      correct.setAttribute('id', 'my-word');
+			      guess = document.createElement('li');
+			      guess.setAttribute('class', 'guess');
+			      var flag=0;
+			      if (word[i] === " ") {
+			        guess.innerHTML = " ";
+			        space += 1;
+			        if(space%3==0 && space!=0 && flag==0)
+				      {
+				      	correct.appendChild(document.createElement("br"));
+				      	flag=1;
+				      }
+			      } 
+			      else if(word[i] >= '0' && word[i] <= '9')
+			      {
+			      	guess.innerHTML = word[i];
+			      	space += 1;
+			      }
+			      else {
+			        guess.innerHTML = "_";
+			      }
+			      
+			     
+
+			      geusses.push(guess);
+			      wordHolder.appendChild(correct);
+			      correct.appendChild(guess);
+			    }
+			  }  
+			
+			// Play
+			  play = function () {
+			    
+			    chosenCategory = categories[catagoryIndex];
+
+			    word = chosenCategory[Math.floor(Math.random() * chosenCategory.length)];
+			    while(!word)
+			    {
+			    	word = chosenCategory[Math.floor(Math.random() * chosenCategory.length)];
+			    	
+			    }	
+			    console.log(word);
+			    buttons();
+			    counter = 0;
+			    geusses = [ ];
+			    space = 0;
+			    result();
+			    catagoryName.innerHTML="<b>Category: </b>" + selcat;
+			   	
+			  }
+
+			// hint display
+			$('#hint').click( function() {
+	     		hints = [
+					        ["Human Instrumentality Project","Philosopher's Stone","Bounty Hunter","I order you!","Case Closed","Mamuru Endou","Kamehameha!","E.N.D","Sage Of Six Paths","Psychological Cyberworld","Mugen","Sibyl System"],
+					        ["VIRUS","CAPTAIN NEMO","BABU BHAIYA","TAIMUR","MAKDEE KE GHAR MEIN..","SARFAROSH","DIMPLE","AAJA NACHLE","MONJOLIKA","TIGRESS PATAUDI","KAAGAZ KE PHOOL"],
+					        ["Julian Mantle","Protagonist Pip","All happy families are alike; each unhappy family is unhappy in its own way","Obsequious Dickens Character","Linkin Park","Bubby","Triple-breasted Whore","Little-Big People","Rabbithole","Hello!","My Struggle","An Imperial Affliction","All men are created equal, but some men are created more equal","Pighead On A Stick","Banned","Ramchandra","One Pound Flesh","Ljubljana"],
+					        ["Purple Canine","Walking The Car","Henry Mancini","What you doin'?","That's all, folks!","Aku","Call them by their numbers","Acme","Cheetah Chug!","Dee-Dee","Hey there, pretty mama!","Joey, Diddy & Marky","12 Jade Statues","Stallone","Renaissance","Mac & Plu"],
+					 		["Roadtrip","3 Friends","Haji Mastan","Su Kar Mere Mann Ko..","Bunny","Tumse Naa Ho Payega","Courtroom Drama","Cycle Race","One Star (in hindi)","Sharadendro Bandopadhyay","3 Lost Brothers","Origami"],
+					 		["Dendi","Death Follows War","Snake","Pip Boy","Cake Is A Lie!","What if the Nazis won?","Nanosuits","Blacklist","Biggest Game Ever!","Xbox-exclusive racing game","Rescue the blonde princess","Stop the engineers!","Run from the tyrant","PS-exclusive racing game","First game to use the most popular gaming engine"],
+					 		["Its tea time","Fission went wrong in Ukraine","Turn on the gas","Da Vinci Code","Avenged by Fat Man","Death of The Little Corporal","Too Salty","O Captain, My Captain!","Let them eat cake","No Man's Land","Anno Domini Begins","End of The Great War","Money Sucks!"],
+					 		["Money Sucks!","The Dude Abides","Never tell me the odds","Yellow Brick Road","The most extraordinary man I've ever met","Buffalo Bill","Carve Your Freedom","Love the smell of napalm","Eustace","Bible","The Golden Ticket","Osama bin Laden","G N I G A","Little Chef","Dr. Lester Sheehan","Precogs"],
+					 		["Aztec Pyramid","Riddling Minx","Rio","Chocolate Eggs","Haathi Mere Saathi","Work shall set you free	","Galileo dropping balls","Jay Edgar","Cisco","Aibak","Ratatouille","Largest Hindu Temple","Church to Mosque to Museum","Da Vinci Code","Pillars Of Hercules","Off the Queensland Coast"],
+					 		["Jimmy McGill","Nice Weather","The points don't matter anyway","David Lynch","David Lynch","Pornstache","The Originals","Everything just goes black","There's always money in the banana stand","Celebrity and politician interview","Time is a flat circle","Haywire","Island Diner","Charlie to Ashton","Charlie Sheen","Raymond"],
+					 		["Football","Football","Chess","Cricket","Table Tennis and more","Boxing","Horse Racing","Baseball"],
+					 		["Voice Of God","Vents & Skirts","Padme","The Iron Lady with the Oscar","Her Voice","Ilsa Lund","Breakfast At Tiffany's","Cleopatra","Ocean's","Here's Johnny","Bateman","An Offer You Can't Refuse","I'm having a friend for dinner","Punched Justin Beiber in the face","Batman","Jean  Valjean"]
+					    ];
+
+	    		 hintIndex = chosenCategory.indexOf(word);
+	    		
+	    		$('#clue').html("<b>HINT: </b>" + hints[catagoryIndex][hintIndex]);
+
+	  		 });	
+
+			 
+
+	  		 $('#reset').click(function() {
+	  		 	console.log("gamecount:"+(gamecount+1));
+	  		 if(gamecount!=0)
+	  		 	{
+			     correct.parentNode.removeChild(correct);
+			     letters.parentNode.removeChild(letters);
+			 	}
+			 $('#clue').html("");
+			 gamecount += 1;
+			 $('#txtques').html("QUESTION " + gamecount);
+		     play();
+		     wofhide();
+		     buttonclick();
+  			});
+	  	});
+
+	$('#next').click(function(){
+		$('#wof').fadeIn(400);
+		$('#ques').fadeOut(400);
+		$('#correct').fadeOut(400);
+		function buttonclick(){
+			  	var buttonclick = document.createElement('audio');
+				buttonclick.setAttribute('src', 'assets/buttonclick.mp3');
+				buttonclick.play();
+			  }
+		buttonclick();
+	});
+
+	</script>
+
+</body>
+</html>
